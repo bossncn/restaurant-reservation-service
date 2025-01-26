@@ -1,0 +1,144 @@
+definitions:
+  dto.CancelReservationResponse:
+    properties:
+      freed_tables:
+        type: integer
+      remaining_tables:
+        type: integer
+    type: object
+  dto.InitializeTableRequest:
+    properties:
+      num_tables:
+        type: integer
+    type: object
+  dto.InitializeTableResponse:
+    properties:
+      total_tables:
+        type: integer
+    type: object
+  dto.ReservationRequest:
+    properties:
+      num_customers:
+        type: integer
+    type: object
+  dto.ReservationResponse:
+    properties:
+      id:
+        type: string
+      remaining_tables:
+        type: integer
+      tables_reserved:
+        type: integer
+    type: object
+  model.Response:
+    properties:
+      code:
+        type: string
+      data: {}
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Service for managing table reservations in a restaurant.
+  license:
+    name: MIT
+    url: https://github.com/bossncn/restaurant-reservation-service/blob/main/LICENSE
+  termsOfService: http://swagger.io/terms/
+  title: Restaurant Reservation Service
+  version: "1.0"
+paths:
+  /public/reservations:
+    post:
+      consumes:
+      - application/json
+      description: Reserves tables for a group of customers.
+      parameters:
+      - description: Number of customers in the group.
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tables reserved successfully.
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ReservationResponse'
+              type: object
+        "400":
+          description: Reservation error.
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Reserve tables
+      tags:
+      - Reservation
+  /public/reservations/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancels a reservation and releases the reserved tables.
+      parameters:
+      - description: The reservation ID to cancel.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reservation canceled successfully.
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CancelReservationResponse'
+              type: object
+        "400":
+          description: Cancellation error.
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Cancel a reservation
+      tags:
+      - Reservation
+  /public/table/init:
+    post:
+      consumes:
+      - application/json
+      description: Initializes the total number of tables in the restaurant. This
+        endpoint must be called first and only once.
+      parameters:
+      - description: Initialize Number of Table Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.InitializeTableRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Total Initialized Tables
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.InitializeTableResponse'
+              type: object
+        "400":
+          description: Table Already Initialized
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Initialize tables in the restaurant
+      tags:
+      - table
+swagger: "2.0"

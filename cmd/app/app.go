@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
-	"github.com/bossncn/go-boilerplate/config"
-	"github.com/bossncn/go-boilerplate/internal/adapters/http"
+	"github.com/bossncn/restaurant-reservation-service/config"
+	"github.com/bossncn/restaurant-reservation-service/internal/adapters/http"
 	"go.uber.org/zap"
 )
 
@@ -44,7 +44,7 @@ func Run(cfg *config.Config) {
 	}(logger)
 
 	// Init App Server
-	server := http.NewHTTPServer(mdw, repo, handler, service)
+	server := http.NewHTTPServer(cfg, mdw, repo, handler, service)
 
 	if err != nil {
 		logger.Fatal("Failed to initialize server", zap.Error(err))

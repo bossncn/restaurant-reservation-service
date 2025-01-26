@@ -1,7 +1,7 @@
 # Makefile
 
 # Variables
-DOCKER_IMAGE_NAME = go-boilerplate
+DOCKER_IMAGE_NAME = restaurant-reservation-service
 DOCKERFILE_PATH = Dockerfile
 
 # Default target
@@ -43,3 +43,9 @@ docker-build:
 docker-clean:
 	@echo "Cleaning up Docker images..."
 	docker rmi $(DOCKER_IMAGE_NAME)
+
+# Generate Swagger Documents
+.PHONY: generate-docs
+generate-docs:
+	@echo "Generating Swagger"
+	swag init -d cmd,internal/adapters/http --parseDependency --parseInternal

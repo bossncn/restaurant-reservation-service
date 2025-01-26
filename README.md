@@ -7,6 +7,7 @@ This is a simple Go boilerplate application designed to demonstrate the Hexagona
 - **Go Boilerplate**: A basic structure to get started with a clean, organized Go project.
 - **Hexagonal Architecture**: Clear separation between core business logic and external systems (HTTP, databases).
 - **Echo Framework**: Uses the Echo framework for HTTP server and routing.
+- **Swagger Documentation**: Auto-generated OpenAPI documentation with [swaggo/swag](https://github.com/swaggo/swag).
 - **Zap Logger**: Efficient and structured logging with the [Zap](https://github.com/uber-go/zap) logging library.
 - **Docker Support**: Easy Docker integration for running the application in containers.
 - **Unit & Integration Tests**: Tests for ensuring functionality and integration across the system.
@@ -66,8 +67,8 @@ In this setup, the core logic is always isolated from the external systems, maki
 1. Clone this repository:
 
     ```bash
-    git clone https://github.com/bossncn/go-boilerplate.git
-    cd go-boilerplate
+    git clone https://github.com/bossncn/restaurant-reservation-service.git
+    cd restaurant-reservation-service
     ```
 
 2. Install Go dependencies:
@@ -115,82 +116,6 @@ Here are the available `make` commands you can use to manage the project:
 │   └── middleware          # Application middleware (e.g., logging, authentication)
 ├── test                    # Test files
 │   └── integration         # Integration tests to test app components together
-```
-
-### Example Code
-
-#### Core (Domain) Model
-
-In `internal/core/model.go`:
-
-```go
-package core
-
-type User struct {
-    ID   string `json:"id"`
-    Name string `json:"name"`
-}
-```
-#### Service (Core Logic)
-
-In internal/core/service.go:
-
-```go
-package core
-
-type UserService struct {
-    userRepo UserRepository
-}
-
-func NewUserService(repo UserRepository) *UserService {
-    return &UserService{userRepo: repo}
-}
-
-func (s *UserService) GetUser(id string) (*User, error) {
-    return s.userRepo.FetchUser(id)
-}
-```
-
-#### Port (interface)
-In internal/core/repository.go:
-
-```go
-package core
-
-type UserRepository interface {
-    FetchUser(id string) (*User, error)
-}
-```
-
-#### Adapter (HTTP Handler)
-In internal/adapter/http/handler.go:
-
-```go
-package http
-
-import (
-    "net/http"
-    "github.com/labstack/echo/v4"
-    "github.com/bossncn/go-boilerplate/internal/core"
-)
-
-type UserHandler struct {
-    userService *core.UserService
-}
-
-func NewUserHandler(e *echo.Echo, userService *core.UserService) {
-    handler := &UserHandler{userService: userService}
-    e.GET("/user/:id", handler.GetUser)
-}
-
-func (h *UserHandler) GetUser(c echo.Context) error {
-    id := c.Param("id")
-    user, err := h.userService.GetUser(id)
-    if err != nil {
-        return c.JSON(http.StatusNotFound, map[string]string{"message": "User not found"})
-    }
-    return c.JSON(http.StatusOK, user)
-}
 ```
 
 ### Running Tests
