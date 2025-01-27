@@ -11,82 +11,83 @@ import (
 	"testing"
 )
 
-func TestNewTableService(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+func TestTablesService(t *testing.T) {
+	t.Run("NewTableService", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-	mockRepo := mockRepository.NewMockTableRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
+		mockRepo := mockRepository.NewMockTableRepository(ctrl)
+		eventRequest := make(chan model.EventRequest, 100)
+		logger := zap.NewNop()
 
-	tableService := service.NewTableService(mockRepo, logger, &eventRequest)
+		tableService := service.NewTableService(mockRepo, logger, &eventRequest)
 
-	assert.NotNil(t, tableService)
-}
+		assert.NotNil(t, tableService)
+	})
+	t.Run("InitializeTables", func(t *testing.T) {
+		t.Run("Success", func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-func TestInitializeTables_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+			mockRepo := mockRepository.NewMockTableRepository(ctrl)
+			eventRequest := make(chan model.EventRequest, 100)
+			logger := zap.NewNop()
+			tableService := service.NewTableService(mockRepo, logger, &eventRequest)
 
-	mockRepo := mockRepository.NewMockTableRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	tableService := service.NewTableService(mockRepo, logger, &eventRequest)
+			// Mock event processor
+			go func() {
+				for req := range eventRequest {
+					if req.Action == "initialize" {
+						req.Response <- nil // Simulate success
+					}
+				}
+			}()
 
-	// Mock event processor
-	go func() {
-		for req := range eventRequest {
-			if req.Action == "initialize" {
-				req.Response <- nil // Simulate success
-			}
-		}
-	}()
+			// Test initialization
+			err := tableService.InitializeTables(10)
 
-	// Test initialization
-	err := tableService.InitializeTables(10)
+			assert.NoError(t, err)
+		})
+		t.Run("Error", func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	assert.NoError(t, err)
-}
+			mockRepo := mockRepository.NewMockTableRepository(ctrl)
+			eventRequest := make(chan model.EventRequest, 100)
+			logger := zap.NewNop()
+			tableService := service.NewTableService(mockRepo, logger, &eventRequest)
 
-func TestInitializeTables_Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+			// Mock event processor
+			go func() {
+				for req := range eventRequest {
+					if req.Action == "initialize" {
+						req.Response <- errors.New("initialization failed") // Simulate failure
+					}
+				}
+			}()
 
-	mockRepo := mockRepository.NewMockTableRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	tableService := service.NewTableService(mockRepo, logger, &eventRequest)
+			// Test initialization
+			err := tableService.InitializeTables(10)
 
-	// Mock event processor
-	go func() {
-		for req := range eventRequest {
-			if req.Action == "initialize" {
-				req.Response <- errors.New("initialization failed") // Simulate failure
-			}
-		}
-	}()
+			assert.Error(t, err)
+			assert.Equal(t, "initialization failed", err.Error())
+		})
+	})
+	t.Run("AvailableTables", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-	// Test initialization
-	err := tableService.InitializeTables(10)
+		mockRepo := mockRepository.NewMockTableRepository(ctrl)
+		eventRequest := make(chan model.EventRequest, 100)
+		logger := zap.NewNop()
+		tableService := service.NewTableService(mockRepo, logger, &eventRequest)
 
-	assert.Error(t, err)
-	assert.Equal(t, "initialization failed", err.Error())
-}
+		// Mock AvailableTables behavior
+		mockRepo.EXPECT().AvailableTables().Return(8).Times(1)
 
-func TestAvailableTables(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+		// Test available tables
+		availableTables := tableService.AvailableTables()
 
-	mockRepo := mockRepository.NewMockTableRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	tableService := service.NewTableService(mockRepo, logger, &eventRequest)
-
-	// Mock AvailableTables behavior
-	mockRepo.EXPECT().AvailableTables().Return(8).Times(1)
-
-	// Test available tables
-	availableTables := tableService.AvailableTables()
-
-	assert.Equal(t, 8, availableTables)
+		assert.Equal(t, 8, availableTables)
+	})
 }

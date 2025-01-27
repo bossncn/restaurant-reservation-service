@@ -12,137 +12,138 @@ import (
 	"testing"
 )
 
-func TestNewReservationService(t *testing.T) {
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+func TestReservationService(t *testing.T) {
+	t.Run("NewReservationService", func(t *testing.T) {
+		eventRequest := make(chan model.EventRequest, 100)
+		logger := zap.NewNop()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-	mockRepo := mockRepository.NewMockReservationRepository(ctrl)
+		mockRepo := mockRepository.NewMockReservationRepository(ctrl)
 
-	svc := service.NewReservationService(mockRepo, logger, &eventRequest)
+		svc := service.NewReservationService(mockRepo, logger, &eventRequest)
 
-	assert.NotNil(t, svc)
-}
+		assert.NotNil(t, svc)
+	})
+	t.Run("ReserveTables", func(t *testing.T) {
+		t.Run("Success", func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-func TestReserveTables_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+			mockRepo := mockRepository.NewMockReservationRepository(ctrl)
+			eventRequest := make(chan model.EventRequest, 100)
+			logger := zap.NewNop()
+			svc := service.NewReservationService(mockRepo, logger, &eventRequest)
 
-	mockRepo := mockRepository.NewMockReservationRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	svc := service.NewReservationService(mockRepo, logger, &eventRequest)
+			// Mock event processor
+			go func() {
+				for req := range eventRequest {
+					if req.Action == "reserve" {
+						req.Response <- uuid.New().String()
+					}
+				}
+			}()
 
-	// Mock event processor
-	go func() {
-		for req := range eventRequest {
-			if req.Action == "reserve" {
-				req.Response <- uuid.New().String()
-			}
-		}
-	}()
+			// Test reservation
+			resID, numTables, err := svc.ReserveTables(6)
 
-	// Test reservation
-	resID, numTables, err := svc.ReserveTables(6)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, resID)
+			assert.Equal(t, 2, numTables) // 6 customers require 2 tables
+		})
+		t.Run("InvalidCustomers", func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	assert.NoError(t, err)
-	assert.NotEmpty(t, resID)
-	assert.Equal(t, 2, numTables) // 6 customers require 2 tables
-}
+			mockRepo := mockRepository.NewMockReservationRepository(ctrl)
+			eventRequest := make(chan model.EventRequest, 100)
+			logger := zap.NewNop()
+			svc := service.NewReservationService(mockRepo, logger, &eventRequest)
 
-func TestReserveTables_InvalidCustomers(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+			// Test with invalid customer count
+			resID, numTables, err := svc.ReserveTables(0)
 
-	mockRepo := mockRepository.NewMockReservationRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	svc := service.NewReservationService(mockRepo, logger, &eventRequest)
+			assert.Error(t, err)
+			assert.Equal(t, "number of customers must be greater than zero", err.Error())
+			assert.Empty(t, resID)
+			assert.Equal(t, 0, numTables)
+		})
+		t.Run("ErrorFromProcessor", func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	// Test with invalid customer count
-	resID, numTables, err := svc.ReserveTables(0)
+			mockRepo := mockRepository.NewMockReservationRepository(ctrl)
+			eventRequest := make(chan model.EventRequest, 100)
+			logger := zap.NewNop()
+			svc := service.NewReservationService(mockRepo, logger, &eventRequest)
 
-	assert.Error(t, err)
-	assert.Equal(t, "number of customers must be greater than zero", err.Error())
-	assert.Empty(t, resID)
-	assert.Equal(t, 0, numTables)
-}
+			// Mock event processor
+			go func() {
+				for req := range eventRequest {
+					if req.Action == "reserve" {
+						req.Response <- errors.New("reservation failed")
+					}
+				}
+			}()
 
-func TestReserveTables_ErrorFromProcessor(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+			// Test reservation
+			resID, numTables, err := svc.ReserveTables(6)
 
-	mockRepo := mockRepository.NewMockReservationRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	svc := service.NewReservationService(mockRepo, logger, &eventRequest)
+			assert.Error(t, err)
+			assert.Equal(t, "reservation failed", err.Error())
+			assert.Empty(t, resID)
+			assert.Equal(t, 0, numTables)
+		})
+	})
+	t.Run("CancelReservation", func(t *testing.T) {
+		t.Run("Success", func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	// Mock event processor
-	go func() {
-		for req := range eventRequest {
-			if req.Action == "reserve" {
-				req.Response <- errors.New("reservation failed")
-			}
-		}
-	}()
+			mockRepo := mockRepository.NewMockReservationRepository(ctrl)
+			eventRequest := make(chan model.EventRequest, 100)
+			logger := zap.NewNop()
+			svc := service.NewReservationService(mockRepo, logger, &eventRequest)
 
-	// Test reservation
-	resID, numTables, err := svc.ReserveTables(6)
+			// Mock event processor
+			go func() {
+				for req := range eventRequest {
+					if req.Action == "cancel" {
+						req.Response <- 2 // Mock returning 2 tables freed
+					}
+				}
+			}()
 
-	assert.Error(t, err)
-	assert.Equal(t, "reservation failed", err.Error())
-	assert.Empty(t, resID)
-	assert.Equal(t, 0, numTables)
-}
+			// Test cancellation
+			numTables, err := svc.CancelReservation("res-1")
 
-func TestCancelReservation_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+			assert.NoError(t, err)
+			assert.Equal(t, 2, numTables)
+		})
+		t.Run("ErrorFromProcessor", func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	mockRepo := mockRepository.NewMockReservationRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	svc := service.NewReservationService(mockRepo, logger, &eventRequest)
+			mockRepo := mockRepository.NewMockReservationRepository(ctrl)
+			eventRequest := make(chan model.EventRequest, 100)
+			logger := zap.NewNop()
+			svc := service.NewReservationService(mockRepo, logger, &eventRequest)
 
-	// Mock event processor
-	go func() {
-		for req := range eventRequest {
-			if req.Action == "cancel" {
-				req.Response <- 2 // Mock returning 2 tables freed
-			}
-		}
-	}()
+			// Mock event processor
+			go func() {
+				for req := range eventRequest {
+					if req.Action == "cancel" {
+						req.Response <- errors.New("cancellation failed")
+					}
+				}
+			}()
 
-	// Test cancellation
-	numTables, err := svc.CancelReservation("res-1")
+			// Test cancellation
+			numTables, err := svc.CancelReservation("res-1")
 
-	assert.NoError(t, err)
-	assert.Equal(t, 2, numTables)
-}
-
-func TestCancelReservation_ErrorFromProcessor(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mockRepository.NewMockReservationRepository(ctrl)
-	eventRequest := make(chan model.EventRequest, 100)
-	logger := zap.NewNop()
-	svc := service.NewReservationService(mockRepo, logger, &eventRequest)
-
-	// Mock event processor
-	go func() {
-		for req := range eventRequest {
-			if req.Action == "cancel" {
-				req.Response <- errors.New("cancellation failed")
-			}
-		}
-	}()
-
-	// Test cancellation
-	numTables, err := svc.CancelReservation("res-1")
-
-	assert.Error(t, err)
-	assert.Equal(t, "cancellation failed", err.Error())
-	assert.Equal(t, 0, numTables)
+			assert.Error(t, err)
+			assert.Equal(t, "cancellation failed", err.Error())
+			assert.Equal(t, 0, numTables)
+		})
+	})
 }

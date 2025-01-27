@@ -7,89 +7,91 @@ import (
 	"testing"
 )
 
-func TestNewTableRepository(t *testing.T) {
-	repo := memory.NewTableRepository()
+func TestMemoryTableRepository(t *testing.T) {
+	t.Run("NewTableRepository", func(t *testing.T) {
+		repo := memory.NewTableRepository()
 
-	assert.NotNil(t, repo)
-	assert.Equal(t, 0, repo.AvailableTables())
-	assert.False(t, repo.IsTableInitialized())
-}
+		assert.NotNil(t, repo)
+		assert.Equal(t, 0, repo.AvailableTables())
+		assert.False(t, repo.IsTableInitialized())
+	})
+	t.Run("InitializeTables", func(t *testing.T) {
+		t.Run("Success", func(t *testing.T) {
+			repo := memory.NewTableRepository()
 
-func TestInitializeTables_Success(t *testing.T) {
-	repo := memory.NewTableRepository()
+			err := repo.InitializeTables(10)
 
-	err := repo.InitializeTables(10)
+			assert.NoError(t, err)
+			assert.Equal(t, 10, repo.AvailableTables())
+			assert.True(t, repo.IsTableInitialized())
+		})
+		t.Run("AlreadyInitialized", func(t *testing.T) {
+			repo := memory.NewTableRepository()
 
-	assert.NoError(t, err)
-	assert.Equal(t, 10, repo.AvailableTables())
-	assert.True(t, repo.IsTableInitialized())
-}
+			_ = repo.InitializeTables(10)
+			err := repo.InitializeTables(5)
 
-func TestInitializeTables_AlreadyInitialized(t *testing.T) {
-	repo := memory.NewTableRepository()
+			assert.Error(t, err)
+			assert.Equal(t, "tables already initialized", err.Error())
+			assert.Equal(t, 10, repo.AvailableTables())
+		})
+	})
+	t.Run("ReserveTables", func(t *testing.T) {
+		t.Run("Success", func(t *testing.T) {
+			repo := memory.NewTableRepository()
 
-	_ = repo.InitializeTables(10)
-	err := repo.InitializeTables(5)
+			_ = repo.InitializeTables(10)
+			reservation := model.Reservation{
+				Id:        "res-1",
+				NumTables: 3,
+			}
 
-	assert.Error(t, err)
-	assert.Equal(t, "tables already initialized", err.Error())
-	assert.Equal(t, 10, repo.AvailableTables())
-}
+			err := repo.ReserveTables(reservation)
 
-func TestReserveTables_Success(t *testing.T) {
-	repo := memory.NewTableRepository()
+			assert.NoError(t, err)
+			assert.Equal(t, 7, repo.AvailableTables())
+			assert.Contains(t, repo.Table.Reservations, "res-1")
+		})
+	})
+	t.Run("CancelReservedTable", func(t *testing.T) {
+		t.Run("Success", func(t *testing.T) {
+			repo := memory.NewTableRepository()
 
-	_ = repo.InitializeTables(10)
-	reservation := model.Reservation{
-		Id:        "res-1",
-		NumTables: 3,
-	}
+			_ = repo.InitializeTables(10)
+			reservation := model.Reservation{
+				Id:        "res-1",
+				NumTables: 3,
+			}
+			_ = repo.ReserveTables(reservation)
 
-	err := repo.ReserveTables(reservation)
+			err := repo.CancelReservedTable("res-1")
 
-	assert.NoError(t, err)
-	assert.Equal(t, 7, repo.AvailableTables())
-	assert.Contains(t, repo.Table.Reservations, "res-1")
-}
+			assert.NoError(t, err)
+			assert.Equal(t, 10, repo.AvailableTables())
+			assert.NotContains(t, repo.Table.Reservations, "res-1")
+		})
+		t.Run("NotFound", func(t *testing.T) {
+			repo := memory.NewTableRepository()
 
-func TestCancelReservedTable_Success(t *testing.T) {
-	repo := memory.NewTableRepository()
+			_ = repo.InitializeTables(10)
 
-	_ = repo.InitializeTables(10)
-	reservation := model.Reservation{
-		Id:        "res-1",
-		NumTables: 3,
-	}
-	_ = repo.ReserveTables(reservation)
+			err := repo.CancelReservedTable("non-existent-id")
 
-	err := repo.CancelReservedTable("res-1")
+			assert.Error(t, err)
+			assert.Equal(t, "booking not found", err.Error())
+			assert.Equal(t, 10, repo.AvailableTables())
+		})
+	})
+	t.Run("AvailableTables", func(t *testing.T) {
+		repo := memory.NewTableRepository()
 
-	assert.NoError(t, err)
-	assert.Equal(t, 10, repo.AvailableTables())
-	assert.NotContains(t, repo.Table.Reservations, "res-1")
-}
+		_ = repo.InitializeTables(10)
+		reservation := model.Reservation{
+			Id:        "res-1",
+			NumTables: 4,
+		}
+		_ = repo.ReserveTables(reservation)
 
-func TestCancelReservedTable_NotFound(t *testing.T) {
-	repo := memory.NewTableRepository()
-
-	_ = repo.InitializeTables(10)
-
-	err := repo.CancelReservedTable("non-existent-id")
-
-	assert.Error(t, err)
-	assert.Equal(t, "booking not found", err.Error())
-	assert.Equal(t, 10, repo.AvailableTables())
-}
-
-func TestAvailableTables(t *testing.T) {
-	repo := memory.NewTableRepository()
-
-	_ = repo.InitializeTables(10)
-	reservation := model.Reservation{
-		Id:        "res-1",
-		NumTables: 4,
-	}
-	_ = repo.ReserveTables(reservation)
-
-	assert.Equal(t, 6, repo.AvailableTables())
+		assert.Equal(t, 6, repo.AvailableTables())
+	})
 }
