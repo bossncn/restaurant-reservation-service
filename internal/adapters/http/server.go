@@ -3,6 +3,10 @@ package http
 import (
 	"github.com/bossncn/restaurant-reservation-service/config"
 	_ "github.com/bossncn/restaurant-reservation-service/docs"
+	"github.com/bossncn/restaurant-reservation-service/internal/adapters/memory"
+	"github.com/bossncn/restaurant-reservation-service/internal/core/model"
+	"github.com/bossncn/restaurant-reservation-service/internal/core/repository"
+	"github.com/bossncn/restaurant-reservation-service/internal/core/service"
 	"github.com/bossncn/restaurant-reservation-service/internal/middleware"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -11,6 +15,8 @@ import (
 )
 
 type Repository struct {
+	TableRepository       repository.TableRepository
+	ReservationRepository repository.ReservationRepository
 }
 
 type Middleware struct {
@@ -18,34 +24,47 @@ type Middleware struct {
 }
 
 type Handler struct {
+	TableHandler       *TableHandler
+	ReservationHandler *ReservationHandler
 }
 
 type Service struct {
+	TableService       *service.TableService
+	ReservationService *service.ReservationService
 }
 
-func InitRepository(cfg *config.Config) *Repository {
-	return &Repository{}
+func InitRepository() *Repository {
+	return &Repository{
+		TableRepository:       memory.NewTableRepository(),
+		ReservationRepository: memory.NewReservationRepository(),
+	}
 }
 
-func InitMiddleware(cfg *config.Config, logger *zap.Logger) *Middleware {
+func InitMiddleware(logger *zap.Logger) *Middleware {
 	return &Middleware{
 		Logger: middleware.ZapLoggerMiddleware(logger),
 	}
 }
 
-func InitHandler(cfg *config.Config) *Handler {
-	return &Handler{}
+func InitHandler(logger *zap.Logger, services *Service) *Handler {
+	return &Handler{
+		TableHandler:       NewTableHandler(logger, services),
+		ReservationHandler: NewReservationHandler(logger, services),
+	}
 }
 
-func InitService(cfg *config.Config) *Service {
-	return &Service{}
+func InitService(logger *zap.Logger, repo *Repository, eventRequest *chan model.EventRequest) *Service {
+	return &Service{
+		TableService:       service.NewTableService(repo.TableRepository, logger, eventRequest),
+		ReservationService: service.NewReservationService(repo.ReservationRepository, logger, eventRequest),
+	}
 }
 
 type ServerHttp struct {
 	app *echo.Echo
 }
 
-func NewHTTPServer(cfg *config.Config, middleware *Middleware, repository *Repository, handler *Handler, service *Service) *ServerHttp {
+func NewHTTPServer(cfg *config.Config, middleware *Middleware, handler *Handler) *ServerHttp {
 	e := echo.New()
 	e.Use(middleware.Logger)
 
@@ -56,6 +75,11 @@ func NewHTTPServer(cfg *config.Config, middleware *Middleware, repository *Repos
 	if cfg.AppEnv == "development" {
 		e.GET("/swagger/*", echoSwagger.WrapHandler)
 	}
+
+	publicRoute := e.Group("/public")
+	secureRoute := e.Group("/secure")
+	handler.TableHandler.RegisterRoutes(publicRoute)
+	handler.ReservationHandler.RegisterRoutes(publicRoute, secureRoute)
 
 	return &ServerHttp{
 		app: e,

@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/bossncn/restaurant-reservation-service/config"
+	"github.com/bossncn/restaurant-reservation-service/internal/adapters/event"
 	"github.com/bossncn/restaurant-reservation-service/internal/adapters/http"
 	"go.uber.org/zap"
 )
@@ -31,10 +32,14 @@ func Run(cfg *config.Config) {
 		fmt.Printf("error initializing logger: %v", err)
 	}
 
-	repo := http.InitRepository(cfg)
-	handler := http.InitHandler(cfg)
-	service := http.InitService(cfg)
-	mdw := http.InitMiddleware(cfg, logger)
+	repo := http.InitRepository()
+
+	// Init Event Processor
+	eventProcessor, requestEvent := event.NewProcessor(repo.TableRepository, repo.ReservationRepository, logger)
+
+	service := http.InitService(logger, repo, requestEvent)
+	handler := http.InitHandler(logger, service)
+	mdw := http.InitMiddleware(logger)
 
 	defer func(logger *zap.Logger) {
 		err := logger.Sync()
@@ -44,11 +49,15 @@ func Run(cfg *config.Config) {
 	}(logger)
 
 	// Init App Server
-	server := http.NewHTTPServer(cfg, mdw, repo, handler, service)
+	server := http.NewHTTPServer(cfg, mdw, handler)
 
 	if err != nil {
 		logger.Fatal("Failed to initialize server", zap.Error(err))
 	}
 
+	// Start Event Processor
+	go eventProcessor.ProcessRequests()
+
+	// Start HTTP
 	server.Start()
 }
