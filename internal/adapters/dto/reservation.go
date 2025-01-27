@@ -5,7 +5,7 @@ type ReservationRequest struct {
 }
 
 type ReservationResponse struct {
-	Id              string `json:"id"`
+	BookingId       string `json:"booking_id"`
 	TablesReserved  int    `json:"tables_reserved"`
 	RemainingTables int    `json:"remaining_tables"`
 }

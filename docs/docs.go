@@ -20,7 +20,59 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/public/reservations": {
+        "/public/table/init": {
+            "post": {
+                "description": "Initializes the total number of tables in the restaurant. This endpoint must be called first and only once.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Table"
+                ],
+                "summary": "Initialize tables in the restaurant",
+                "parameters": [
+                    {
+                        "description": "Initialize Number of Table Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.InitializeTableRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Total Initialized Tables",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/model.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.InitializeTableResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Table Already Initialized",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/secure/reservations": {
             "post": {
                 "description": "Reserves tables for a group of customers.",
                 "consumes": [
@@ -72,7 +124,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/public/reservations/{id}": {
+        "/secure/reservations/{id}": {
             "delete": {
                 "description": "Cancels a reservation and releases the reserved tables.",
                 "consumes": [
@@ -121,58 +173,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/public/table/init": {
-            "post": {
-                "description": "Initializes the total number of tables in the restaurant. This endpoint must be called first and only once.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "table"
-                ],
-                "summary": "Initialize tables in the restaurant",
-                "parameters": [
-                    {
-                        "description": "Initialize Number of Table Request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.InitializeTableRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Total Initialized Tables",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/model.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.InitializeTableResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Table Already Initialized",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -214,7 +214,7 @@ const docTemplate = `{
         "dto.ReservationResponse": {
             "type": "object",
             "properties": {
-                "id": {
+                "booking_id": {
                     "type": "string"
                 },
                 "remaining_tables": {
@@ -232,7 +232,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "data": {},
-                "message": {
+                "memory": {
                     "type": "string"
                 }
             }

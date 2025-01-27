@@ -23,7 +23,7 @@ definitions:
     type: object
   dto.ReservationResponse:
     properties:
-      id:
+      booking_id:
         type: string
       remaining_tables:
         type: integer
@@ -48,67 +48,6 @@ info:
   title: Restaurant Reservation Service
   version: "1.0"
 paths:
-  /public/reservations:
-    post:
-      consumes:
-      - application/json
-      description: Reserves tables for a group of customers.
-      parameters:
-      - description: Number of customers in the group.
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReservationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Tables reserved successfully.
-          schema:
-            allOf:
-            - $ref: '#/definitions/model.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.ReservationResponse'
-              type: object
-        "400":
-          description: Reservation error.
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Reserve tables
-      tags:
-      - Reservation
-  /public/reservations/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Cancels a reservation and releases the reserved tables.
-      parameters:
-      - description: The reservation ID to cancel.
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Reservation canceled successfully.
-          schema:
-            allOf:
-            - $ref: '#/definitions/model.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.CancelReservationResponse'
-              type: object
-        "400":
-          description: Cancellation error.
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Cancel a reservation
-      tags:
-      - Reservation
   /public/table/init:
     post:
       consumes:
@@ -140,5 +79,66 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Initialize tables in the restaurant
       tags:
-      - table
+      - Table
+  /secure/reservations:
+    post:
+      consumes:
+      - application/json
+      description: Reserves tables for a group of customers.
+      parameters:
+      - description: Number of customers in the group.
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tables reserved successfully.
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ReservationResponse'
+              type: object
+        "400":
+          description: Reservation error.
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Reserve tables
+      tags:
+      - Reservation
+  /secure/reservations/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancels a reservation and releases the reserved tables.
+      parameters:
+      - description: The reservation ID to cancel.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reservation canceled successfully.
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CancelReservationResponse'
+              type: object
+        "400":
+          description: Cancellation error.
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Cancel a reservation
+      tags:
+      - Reservation
 swagger: "2.0"

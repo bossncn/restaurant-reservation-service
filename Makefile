@@ -24,7 +24,7 @@ go-mod-tidy:
 .PHONY: go-test
 go-test:
 	@echo "Running tests..."
-	go test ./...
+	go test ./... -v -cover
 
 # Format Go code
 .PHONY: go-format
@@ -49,3 +49,13 @@ docker-clean:
 generate-docs:
 	@echo "Generating Swagger"
 	swag init -d cmd,internal/adapters/http --parseDependency --parseInternal
+
+.PHONY: install-tools
+install-tools:
+	go install go.uber.org/mock/mockgen@latest
+	go install github.com/swaggo/swag/cmd/swag@latest
+
+.PHONY: generate-mock
+generate-mock:
+	mockgen -source=internal/core/repository/tables.go -destination=internal/core/repository/mock/mock_table_repository.go
+	mockgen -source=internal/core/repository/reservations.go -destination=internal/core/repository/mock/mock_reservation_repository.go

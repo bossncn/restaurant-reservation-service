@@ -108,7 +108,7 @@ Here are the available `make` commands you can use to manage the project:
 ├── internal
 │   ├── adapter             # Implementations of external systems (e.g., HTTP, DB adapters)
 │   │   ├── http            # HTTP handler implementations using Echo framework
-│   │   └── memory          # In-memory implementations of repositories or services
+│   │   └── memory         # Messaging Queue implementations of repositories or services
 │   ├── core                # Core business logic
 │   │   ├── model           # Core models (e.g., User, Product, etc.)
 │   │   ├── repository      # Interfaces for repositories (e.g., data storage logic)
