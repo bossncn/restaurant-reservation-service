@@ -21,6 +21,7 @@ func TestMemoryReservationRepository(t *testing.T) {
 		assert.NotNil(t, reservation)
 		assert.Equal(t, 3, reservation.NumTables)
 		assert.NotEmpty(t, reservation.Id)
+		assert.Equal(t, *reservation, repo.Reservations[reservation.Id])
 	})
 	t.Run("FindReservationById", func(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {

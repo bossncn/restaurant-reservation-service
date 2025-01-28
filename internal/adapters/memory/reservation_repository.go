@@ -19,10 +19,12 @@ func NewReservationRepository() *ReservationRepository {
 }
 
 func (r *ReservationRepository) CreateReservation(numTables int) *model.Reservation {
-	return &model.Reservation{
+	reservation := &model.Reservation{
 		Id:        generateID(),
 		NumTables: numTables,
 	}
+	r.Reservations[reservation.Id] = *reservation
+	return reservation
 }
 
 func (r *ReservationRepository) FindReservationById(id string) (*model.Reservation, error) {
