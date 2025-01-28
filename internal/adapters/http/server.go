@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/bossncn/restaurant-reservation-service/config"
 	_ "github.com/bossncn/restaurant-reservation-service/docs"
 	"github.com/bossncn/restaurant-reservation-service/internal/adapters/memory"
@@ -29,8 +30,8 @@ type Handler struct {
 }
 
 type Service struct {
-	TableService       *service.TableService
-	ReservationService *service.ReservationService
+	TableService       service.TableService
+	ReservationService service.ReservationService
 }
 
 func InitRepository() *Repository {
@@ -74,6 +75,7 @@ func NewHTTPServer(cfg *config.Config, middleware *Middleware, handler *Handler)
 	// Swagger
 	if cfg.AppEnv == "development" {
 		e.GET("/swagger/*", echoSwagger.WrapHandler)
+		fmt.Println("Swagger enabled at: http://localhost:8080/swagger/index.html")
 	}
 
 	publicRoute := e.Group("/public")
@@ -88,5 +90,6 @@ func NewHTTPServer(cfg *config.Config, middleware *Middleware, handler *Handler)
 
 func (s *ServerHttp) Start() {
 	port := ":8080"
+	fmt.Printf("Server started on http://localhost%s\n ", port)
 	_ = s.app.Start(port)
 }

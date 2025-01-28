@@ -13,8 +13,8 @@ import (
 
 type ReservationHandler struct {
 	logger             *zap.Logger
-	reservationService *service.ReservationService
-	tableService       *service.TableService
+	reservationService service.ReservationService
+	tableService       service.TableService
 }
 
 func NewReservationHandler(logger *zap.Logger, service *Service) *ReservationHandler {
@@ -28,7 +28,7 @@ func NewReservationHandler(logger *zap.Logger, service *Service) *ReservationHan
 func (handler *ReservationHandler) RegisterRoutes(_ *echo.Group, secureRoute *echo.Group) {
 	secureReservationGroup := secureRoute.Group("/reservations")
 	secureReservationGroup.POST("", handler.Reserve)
-	secureReservationGroup.DELETE("/{id}", handler.CancelReservation)
+	secureReservationGroup.DELETE("/:id", handler.CancelReservation)
 }
 
 // Reserve

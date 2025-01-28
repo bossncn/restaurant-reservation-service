@@ -31,9 +31,30 @@ func initializeTables(t *testing.T, echoInstance *echo.Echo, numTables int) {
 }
 
 func TestIntegrationTables(t *testing.T) {
-	t.Run("should return 200", func(t *testing.T) {
-		echoInstance := Setup()
+	t.Run("POST /public/table/init", func(t *testing.T) {
+		t.Run("should return 200", func(t *testing.T) {
+			echoInstance := Setup()
 
-		initializeTables(t, echoInstance, 10)
+			initializeTables(t, echoInstance, 10)
+		})
+		t.Run("should return 400 if run twice", func(t *testing.T) {
+			echoInstance := Setup()
+
+			initializeTables(t, echoInstance, 10)
+
+			reqBody := fmt.Sprintf(`{"num_tables": 10}`)
+			req := httptest.NewRequest(http.MethodPost, "/public/table/init", bytes.NewReader([]byte(reqBody)))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+
+			// Action
+			echoInstance.ServeHTTP(rec, req)
+
+			var resp model.Response
+			_ = json.Unmarshal([]byte(rec.Body.String()), &resp)
+
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+			assert.Equal(t, "tables already initialized", resp.Data)
+		})
 	})
 }

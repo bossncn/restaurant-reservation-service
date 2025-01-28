@@ -59,3 +59,5 @@ install-tools:
 generate-mock:
 	mockgen -source=internal/core/repository/tables.go -destination=internal/core/repository/mock/mock_table_repository.go
 	mockgen -source=internal/core/repository/reservations.go -destination=internal/core/repository/mock/mock_reservation_repository.go
+	mockgen -source=internal/core/service/tables.go -destination=internal/core/service/mock/mock_table_service.go
+	mockgen -source=internal/core/service/reservations.go -destination=internal/core/service/mock/mock_reservation_service.go

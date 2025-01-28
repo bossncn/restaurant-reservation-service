@@ -8,15 +8,20 @@ import (
 	"sync"
 )
 
-type TableService struct {
+type TableService interface {
+	InitializeTables(numTables int) error
+	AvailableTables() int
+}
+
+type TableServiceImpl struct {
 	tableRepo repository.TableRepository
 	requests  chan model.EventRequest
 	logger    *zap.Logger
 	wg        sync.WaitGroup
 }
 
-func NewTableService(repo repository.TableRepository, logger *zap.Logger, eventRequest *chan model.EventRequest) *TableService {
-	tableService := &TableService{
+func NewTableService(repo repository.TableRepository, logger *zap.Logger, eventRequest *chan model.EventRequest) *TableServiceImpl {
+	tableService := &TableServiceImpl{
 		tableRepo: repo,
 		logger:    logger,
 		requests:  *eventRequest,
@@ -25,7 +30,7 @@ func NewTableService(repo repository.TableRepository, logger *zap.Logger, eventR
 	return tableService
 }
 
-func (s *TableService) InitializeTables(numTables int) error {
+func (s *TableServiceImpl) InitializeTables(numTables int) error {
 	resp := make(chan interface{})
 	s.requests <- model.EventRequest{Id: (uuid.New()).String(), Action: "initialize", NumTables: numTables, Response: resp}
 	result := <-resp
@@ -35,6 +40,6 @@ func (s *TableService) InitializeTables(numTables int) error {
 	return nil
 }
 
-func (s *TableService) AvailableTables() int {
+func (s *TableServiceImpl) AvailableTables() int {
 	return s.tableRepo.AvailableTables()
 }

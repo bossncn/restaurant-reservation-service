@@ -13,7 +13,7 @@ import (
 
 type TableHandler struct {
 	logger       *zap.Logger
-	tableService *service.TableService
+	tableService service.TableService
 }
 
 func NewTableHandler(logger *zap.Logger, service *Service) *TableHandler {
