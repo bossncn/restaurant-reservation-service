@@ -38,6 +38,12 @@ docker-build:
 	@echo "Building Docker image..."
 	docker build -t $(DOCKER_IMAGE_NAME) -f $(DOCKERFILE_PATH) .
 
+# Run Docker image
+.PHONY: docker-run
+docker-run:
+	@echo "Running Docker image..."
+	docker run -d -p 8080:8080 --name $(DOCKER_IMAGE_NAME) $(DOCKER_IMAGE_NAME)
+
 # Clean up Docker images
 .PHONY: docker-clean
 docker-clean:

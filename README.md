@@ -1,6 +1,94 @@
-# Go Boilerplate with Hexagonal Architecture using Echo Framework
+## Getting Started
 
-This is a simple Go boilerplate application designed to demonstrate the Hexagonal Architecture (also known as Ports and Adapters) pattern using the [Echo Framework](https://echo.labstack.com/). It provides a basic structure to build scalable, maintainable applications by decoupling the core business logic from external systems (e.g., databases, APIs, etc.).
+### Prerequisites
+
+- Go 1.18 or later
+- Docker (optional, for database setup)
+- [Echo Framework](https://echo.labstack.com/)
+
+### Installation
+
+1. Clone this repository:
+
+    ```bash
+    git clone https://github.com/bossncn/restaurant-reservation-service.git
+    cd restaurant-reservation-service
+    ```
+
+2. Install Go dependencies:
+
+    ```bash
+    go mod tidy
+    ```
+
+3. Run the application:
+
+    ```bash
+    go run main.go
+    ```
+   
+The application should now be running at `http://localhost:8080`.
+
+Optional
+
+Run with Docker
+
+1. Build
+
+   ```bash
+   make docker-build
+   ```
+   
+2. Run docker
+
+   ```bash
+   make docker-run
+   ```
+
+### Make Commands
+
+Here are the available `make` commands you can use to manage the project:
+
+- **`make go-run`**: Runs the application.
+- **`make go-mod-tidy`**: Tidies up Go modules.
+- **`make go-test`**: Runs all tests in the project.
+- **`make go-format`**: Formats all Go code.
+- **`make docker-build`**: Builds the Docker image for the application.
+- **`make docker-run`**: Run Docker
+- **`make docker-clean`**: Cleans up the Docker image.
+- **`make generate-docs`**: Generate Swagger Documents
+- **`make generate-mock`**: Generate Mock
+
+
+### Project Structure
+
+```bash
+/go-hexagonal-boilerplate
+├── cmd
+│   ├── app                 # Initializes HTTP server and acts as the entry point for the application
+│   │   └── app             # Core application components for HTTP setup and dependency injection
+│   └── main                # Runs the application (starts the HTTP server initialized in 'app')
+├── config                  # Configuration files for the app (e.g., environment variables, settings)
+├── internal
+│   ├── adapter             # Implementations of external systems (e.g., HTTP, DB adapters)
+│   │   ├── http            # HTTP handler implementations using Echo framework
+│   │   └── memory          # In-memory storage implementation of repository
+│   │   └── event           # Event App Process Command request
+│   ├── core                # Core business logic
+│   │   ├── model           # Core models (e.g., User, Product, etc.)
+│   │   ├── repository      # Interfaces for repositories (e.g., data storage logic)
+│   │   └── service         # Core service implementations, business logic
+│   └── middleware          # Application middleware (e.g., logging, authentication)
+├── test                    # Test files
+│   └── integration         # Integration tests to test app components together
+```
+
+### Running Tests
+To run tests:
+
+   ```bash
+   make go-test
+   ```
 
 ## Features
 
@@ -54,76 +142,6 @@ By separating these concerns into distinct layers, it becomes much easier to wri
 
 In this setup, the core logic is always isolated from the external systems, making it easier to maintain and test. The adapters allow external systems to interact with the core logic without tightly coupling the application to any particular implementation.
 
-## Getting Started
-
-### Prerequisites
-
-- Go 1.18 or later
-- Docker (optional, for database setup)
-- [Echo Framework](https://echo.labstack.com/)
-
-### Installation
-
-1. Clone this repository:
-
-    ```bash
-    git clone https://github.com/bossncn/restaurant-reservation-service.git
-    cd restaurant-reservation-service
-    ```
-
-2. Install Go dependencies:
-
-    ```bash
-    go mod tidy
-    ```
-
-3. Run the application:
-
-    ```bash
-    go run main.go
-    ```
-
-The application should now be running at `http://localhost:8080`.
-
-### Make Commands
-
-Here are the available `make` commands you can use to manage the project:
-
-- **`make go-run`**: Runs the application.
-- **`make go-mod-tidy`**: Tidies up Go modules.
-- **`make go-test`**: Runs all tests in the project.
-- **`make go-format`**: Formats all Go code.
-- **`make docker-build`**: Builds the Docker image for the application.
-- **`make docker-clean`**: Cleans up the Docker image.
-
-### Project Structure
-
-```bash
-/go-hexagonal-boilerplate
-├── cmd
-│   ├── app                 # Initializes HTTP server and acts as the entry point for the application
-│   │   └── app             # Core application components for HTTP setup and dependency injection
-│   └── main                # Runs the application (starts the HTTP server initialized in 'app')
-├── config                  # Configuration files for the app (e.g., environment variables, settings)
-├── internal
-│   ├── adapter             # Implementations of external systems (e.g., HTTP, DB adapters)
-│   │   ├── http            # HTTP handler implementations using Echo framework
-│   │   └── memory         # Messaging Queue implementations of repositories or services
-│   ├── core                # Core business logic
-│   │   ├── model           # Core models (e.g., User, Product, etc.)
-│   │   ├── repository      # Interfaces for repositories (e.g., data storage logic)
-│   │   └── service         # Core service implementations, business logic
-│   └── middleware          # Application middleware (e.g., logging, authentication)
-├── test                    # Test files
-│   └── integration         # Integration tests to test app components together
-```
-
-### Running Tests
-To run tests:
-
-```bash
-go test ./...
-```
 
 ## Contributing
 Feel free to open issues or create pull requests to improve the boilerplate. Contributions are always welcome!
